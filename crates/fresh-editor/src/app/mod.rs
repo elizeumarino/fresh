@@ -3320,6 +3320,15 @@ impl Editor {
                 .buffer_metadata
                 .get(&self.active_buffer())
                 .and_then(|m| m.virtual_mode());
+            let has_lsp_config = {
+                let language = self
+                    .buffers
+                    .get(&self.active_buffer())
+                    .map(|s| s.language.as_str());
+                language
+                    .and_then(|lang| self.lsp.as_ref().and_then(|lsp| lsp.get_config(lang)))
+                    .is_some()
+            };
             self.command_registry.read().unwrap().filter(
                 query,
                 self.key_context,
@@ -3327,6 +3336,7 @@ impl Editor {
                 self.has_active_selection(),
                 &self.active_custom_contexts,
                 active_buffer_mode,
+                has_lsp_config,
             )
         } else if input.starts_with('#') {
             // Buffer mode
@@ -3461,6 +3471,7 @@ impl Editor {
                 .get(&self.active_buffer())
                 .and_then(|m| m.virtual_mode())
                 .map(|s| s.to_string()),
+            has_lsp_config: false, // Not needed for file suggestions
         };
 
         self.file_provider.suggestions(query, &context)
@@ -4015,6 +4026,15 @@ impl Editor {
                     .buffer_metadata
                     .get(&self.active_buffer())
                     .and_then(|m| m.virtual_mode());
+                let has_lsp_config = {
+                    let language = self
+                        .buffers
+                        .get(&self.active_buffer())
+                        .map(|s| s.language.as_str());
+                    language
+                        .and_then(|lang| self.lsp.as_ref().and_then(|lsp| lsp.get_config(lang)))
+                        .is_some()
+                };
                 if let Some(prompt) = &mut self.prompt {
                     // Use the underlying context (not Prompt context) for filtering
                     prompt.suggestions = self.command_registry.read().unwrap().filter(
@@ -4024,6 +4044,7 @@ impl Editor {
                         selection_active,
                         &self.active_custom_contexts,
                         active_buffer_mode,
+                        has_lsp_config,
                     );
                     prompt.selected_suggestion = if prompt.suggestions.is_empty() {
                         None
