@@ -171,9 +171,7 @@ impl Editor {
                 .map(|w| &w.buffers)
                 .expect("active window present")
             {
-                let is_virtual = self
-                    .buffer_metadata
-                    .get(buffer_id)
+                let is_virtual = self.active_window().buffer_metadata.get(buffer_id)
                     .map(|m| m.is_virtual())
                     .unwrap_or(false);
                 // Report the ACTIVE split's view_mode so plugins can distinguish
@@ -216,9 +214,7 @@ impl Editor {
                             .map(|bs| matches!(bs.view_mode, crate::state::ViewMode::PageView))
                             .unwrap_or(false)
                     });
-                let is_preview = self
-                    .buffer_metadata
-                    .get(buffer_id)
+                let is_preview = self.active_window().buffer_metadata.get(buffer_id)
                     .map(|m| m.is_preview)
                     .unwrap_or(false);
                 // Which splits currently hold this buffer — lets plugins
@@ -264,9 +260,7 @@ impl Editor {
                 // `active_buffer ∈ keyed_states` invariant). For hidden
                 // buffers we therefore skip group-host splits and pick the
                 // inner split, which is the authoritative home.
-                let is_hidden = self
-                    .buffer_metadata
-                    .get(buffer_id)
+                let is_hidden = self.active_window().buffer_metadata.get(buffer_id)
                     .is_some_and(|m| m.hidden_from_tabs);
                 let source_split = self
                     .windows
@@ -2313,7 +2307,7 @@ impl Editor {
 
         // Apply hidden_from_tabs to buffer metadata
         if hidden_from_tabs {
-            if let Some(meta) = self.buffer_metadata.get_mut(&buffer_id) {
+            if let Some(meta) = self.active_window_mut().buffer_metadata.get_mut(&buffer_id) {
                 meta.hidden_from_tabs = true;
             }
         }
@@ -5056,9 +5050,7 @@ impl Editor {
 
     fn handle_restart_lsp_for_language(&mut self, language: String) {
         tracing::info!("Plugin restarting LSP for language: {}", language);
-        let file_path = self
-            .buffer_metadata
-            .get(&self.active_buffer())
+        let file_path = self.active_window().buffer_metadata.get(&self.active_buffer())
             .and_then(|meta| meta.file_path().cloned());
         let __active_id = self.active_window;
         let success = if let Some(lsp) = self
